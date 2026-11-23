@@ -11,7 +11,6 @@ pub mod combinators;
 mod ast;
 mod builder;
 mod cast;
-mod chunk;
 mod error;
 mod execute;
 mod heuristic_mappings;
@@ -21,7 +20,6 @@ mod selector;
 pub use self::{
     ast::{CastTo, Lens, Lenses, OutputMode},
     builder::{DeriveLensBuilder, MutateLensBuilder},
-    chunk::ChunkExt,
     error::{LensBuilderError, LensError, LensRuntimeError},
     selector::{
         DynExpr, Error as SelectorError, IntoDynExpr, Literal, Runtime, Selector,

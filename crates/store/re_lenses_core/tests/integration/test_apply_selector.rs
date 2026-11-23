@@ -6,7 +6,7 @@ use arrow::array::{ArrayRef, Float64Array};
 use re_chunk::{Chunk, RowId};
 use re_lenses_core::combinators::{Error, try_downcast};
 use re_lenses_core::function_registry::FunctionRegistry;
-use re_lenses_core::{ChunkExt as _, DynExpr, Runtime, Selector};
+use re_lenses_core::{DynExpr, Runtime, Selector, Lens, Lenses};
 use re_log_types::Timeline;
 use re_sdk_types::ComponentDescriptor;
 
@@ -69,13 +69,15 @@ fn apply_selector_doubles_values() {
     "#);
 
     let selector: Selector<DynExpr> = Selector::parse(".").unwrap().pipe(double_values);
-
     let runtime = Runtime::new(Arc::new(FunctionRegistry::new()));
-    let result = chunk
-        .apply_selector("value".into(), &selector, &runtime)
+    let lens = Lenses::default().add_lens(Lens::mutate("value", selector).build());
+
+    let result = lens
+        .apply(chunk, &runtime)
+        .collect::<Result<Vec<_>, _>>()
         .unwrap();
 
-    insta::assert_snapshot!(format!("{:-240}", result), @r#"
+    insta::assert_snapshot!(format!("{:-240}", result[0]), @r#"
     ┌────────────────────────────────────────────────────────────────────────────────────────────┐
     │ METADATA:                                                                                  │
     │ * entity_path: /test/sensor                                                                │
@@ -97,4 +99,5 @@ fn apply_selector_doubles_values() {
     │ └───────────────────────────────────────────────┴──────────────────┴─────────────────────┘ │
     └────────────────────────────────────────────────────────────────────────────────────────────┘
     "#);
+
 }

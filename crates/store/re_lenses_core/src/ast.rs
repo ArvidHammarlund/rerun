@@ -158,13 +158,14 @@ impl Lens {
 /// Controls which components are forwarded when applying lenses.
 ///
 /// This is a global setting across all lenses in a [`Lenses`] collection.
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, Default)]
 pub enum OutputMode {
     /// Forward all original components alongside any lens-produced outputs.
     ForwardAll,
 
     /// Forward original components that are not consumed by any lens,
     /// alongside any lens-produced outputs.
+    #[default]
     ForwardUnmatched,
 
     /// Only forward lens-produced outputs, dropping all other components.
@@ -175,7 +176,7 @@ pub enum OutputMode {
 ///
 /// Lenses are pre-categorized at add time so per-chunk execution avoids
 /// redundant classification work.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Lenses {
     pub(crate) mutates: Vec<(ResolvedEntityPathFilter, MutateLens)>,
     pub(crate) same_entity_derives: Vec<(ResolvedEntityPathFilter, DeriveSameEntityLens)>,
@@ -232,9 +233,9 @@ impl Lenses {
     /// and reported as errors in the results.
     pub fn apply(
         &self,
-        chunk: Arc<Chunk>,
+        chunk: impl Into<Arc<Chunk>>,
         runtime: &crate::Runtime,
-    ) -> impl Iterator<Item = Result<Chunk, crate::LensError>> + use<> {
-        crate::execute::execute(self, chunk, runtime)
+    ) -> impl Iterator<Item = Result<Chunk, crate::LensError>> {
+        crate::execute::execute(self, chunk.into(), runtime)
     }
 }

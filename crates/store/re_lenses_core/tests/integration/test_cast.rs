@@ -13,7 +13,7 @@ use arrow::datatypes::{DataType, Field, Float64Type};
 
 use re_chunk::{Chunk, RowId};
 use re_lenses_core::function_registry::FunctionRegistry;
-use re_lenses_core::{CastTo, ChunkExt as _, Lens, LensRuntimeError, Runtime, Selector};
+use re_lenses_core::{CastTo, Lens, LensRuntimeError, Runtime, Selector};
 use re_log_types::Timeline;
 use re_sdk_types::ComponentDescriptor;
 use re_sdk_types::archetypes::{Points3D, Scalars};
@@ -65,8 +65,10 @@ fn auto_casts_to_canonical_scalar_float64() {
         .build()
         .unwrap();
 
-    let chunks = chunk
-        .apply_lenses(&[lens], &runtime())
+    let mut collection = re_lenses_core::Lenses::new(re_lenses_core::OutputMode::ForwardUnmatched);
+    collection = collection.add_lens(lens.clone());
+
+    let chunks = collection.apply(chunk, &runtime())
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
 
@@ -95,8 +97,10 @@ fn to_component_defaults_to_no_cast() {
         .build()
         .unwrap();
 
-    let chunks = chunk
-        .apply_lenses(&[lens], &runtime())
+    let mut collection = re_lenses_core::Lenses::new(re_lenses_core::OutputMode::ForwardUnmatched);
+    collection = collection.add_lens(lens.clone());
+
+    let chunks = collection.apply(chunk, &runtime())
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
 
@@ -126,9 +130,10 @@ fn explicit_type_cast_to_float32() {
         )
         .build()
         .unwrap();
+    let mut collection = re_lenses_core::Lenses::new(re_lenses_core::OutputMode::ForwardUnmatched);
+    collection = collection.add_lens(lens.clone());
 
-    let chunks = chunk
-        .apply_lenses(&[lens], &runtime())
+    let chunks = collection.apply(chunk, &runtime())
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
 
@@ -159,11 +164,12 @@ fn auto_casts_fixed_size_list_f64_to_f32() {
         .build()
         .unwrap();
 
-    let chunks = chunk
-        .apply_lenses(&[lens], &runtime())
+    let mut collection = re_lenses_core::Lenses::new(re_lenses_core::OutputMode::ForwardUnmatched);
+    collection = collection.add_lens(lens.clone());
+
+    let chunks = collection.apply(chunk, &runtime())
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
-
     insta::assert_snapshot!(DisplayRB(output_column(&chunks, descr.component)), @r"
     ┌─────────────────────────────────────────────────┐
     │ col                                             │
@@ -190,8 +196,10 @@ fn cast_preserves_nulls() {
         .build()
         .unwrap();
 
-    let chunks = chunk
-        .apply_lenses(&[lens], &runtime())
+    let mut collection = re_lenses_core::Lenses::new(re_lenses_core::OutputMode::ForwardUnmatched);
+    collection = collection.add_lens(lens.clone());
+
+    let chunks = collection.apply(chunk, &runtime())
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
 
@@ -220,9 +228,10 @@ fn scatter_path_casts_each_exploded_row() {
         .to_component_with_cast(descr.clone(), Selector::parse(".").unwrap(), CastTo::Auto)
         .build()
         .unwrap();
+    let mut collection = re_lenses_core::Lenses::new(re_lenses_core::OutputMode::ForwardUnmatched);
+    collection = collection.add_lens(lens.clone());
 
-    let chunks = chunk
-        .apply_lenses(&[lens], &runtime())
+    let chunks = collection.apply(chunk, &runtime())
         .collect::<Result<Vec<_>, _>>()
         .unwrap();
 
@@ -258,8 +267,10 @@ fn uncastable_type_errors() {
         .build()
         .unwrap();
 
-    let err = chunk
-        .apply_lenses(&[lens], &runtime())
+    let mut collection = re_lenses_core::Lenses::new(re_lenses_core::OutputMode::ForwardUnmatched);
+    collection = collection.add_lens(lens.clone());
+
+    let err = collection.apply(chunk, &runtime())
         .collect::<Result<Vec<_>, _>>()
         .unwrap_err();
     assert!(
@@ -285,8 +296,10 @@ fn auto_cast_to_unregistered_component_errors() {
         .build()
         .unwrap();
 
-    let err = chunk
-        .apply_lenses(&[lens], &runtime())
+    let mut collection = re_lenses_core::Lenses::new(re_lenses_core::OutputMode::ForwardUnmatched);
+    collection = collection.add_lens(lens.clone());
+
+    let err = collection.apply(chunk, &runtime())
         .collect::<Result<Vec<_>, _>>()
         .unwrap_err();
     assert!(

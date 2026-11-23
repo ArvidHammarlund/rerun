@@ -574,22 +574,17 @@ fn derive_and_mutate_on_same_input() {
 #[test]
 fn derived_chunks_outlive_lenses_and_runtime() {
     let chunk = three_component_chunk();
-
-    let results = {
-        let lenses = Lenses::new(OutputMode::DropUnmatched).add_lens(
-            Lens::derive("alpha")
-                .output_entity("derived")
-                .to_component(
-                    ComponentDescriptor::partial("alpha_out"),
-                    Selector::parse(".").unwrap(),
-                )
-                .build()
-                .unwrap(),
-        );
-        let runtime = empty_runtime();
-        lenses.apply(Arc::clone(&chunk), &runtime)
-    };
-
-    let results: Vec<_> = results.try_collect().unwrap();
+    let lenses = Lenses::new(OutputMode::DropUnmatched).add_lens(
+        Lens::derive("alpha")
+            .output_entity("derived")
+            .to_component(
+                ComponentDescriptor::partial("alpha_out"),
+                Selector::parse(".").unwrap(),
+            )
+            .build()
+            .unwrap(),
+    );
+    let runtime = empty_runtime();
+    let results: Vec<_> = lenses.apply(chunk, &runtime).try_collect().unwrap();
     assert_eq!(results.len(), 1, "one derived chunk, no prefix");
 }
